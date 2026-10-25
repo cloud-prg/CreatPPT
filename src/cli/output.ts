@@ -3,6 +3,7 @@ import type { DeckSpec } from '../domain/types'
 
 export function printResult(json: boolean, result: Record<string, unknown>): void {
   if (json) process.stdout.write(`${JSON.stringify(result)}\n`)
+  else if (result.message) process.stdout.write(`${result.message}\n`)
   else if (result.url) process.stdout.write(`CreatPPT workspace: ${result.url}\n`)
   else if (result.stopped) process.stdout.write(`CreatPPT workspace stopped: ${result.projectDir}\n`)
   else if (result.health) process.stdout.write(`CreatPPT workspace healthy: ${result.projectDir}\n`)

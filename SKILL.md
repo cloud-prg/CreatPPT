@@ -124,6 +124,8 @@ npx @seekskyworld/creatppt@latest create --from ./work/deck.json \
 - `import <file>` accepts the same sources and supported semantic Dashi-shaped goal JSON; only meaning and media references cross the boundary. Reference runtimes, templates, and exporters stay isolated.
 - `plan <file> --variants 1-3 --json` inspects deterministic candidates without creating a delivery directory.
 - `validate <deck.json> --showcase --json` runs the internal grammar gate. It is a quality gate, not a user approval step.
+- `outline <project|deck.json> [--out <file>] [--json]` renders the deck's semantic content as a publishable Markdown outline. Use it to hand the deck's meaning to a blog post, a Knowledge Base article, or the next Agent. It reads `deck.json` and never writes into the delivery directory unless `--out` names a path outside it.
+- `stats <project|deck.json> [--json]` reports CJK-aware word counts, per-slide density, layout distribution, and image alt coverage. Use it for self-review before handing a deck to a person.
 
 ## Authoring contract
 

@@ -20,6 +20,7 @@ import { projectExists } from './server/handlers'
 import { startCreatPptServer } from './server/server'
 import { limitDeckSlides, normalizeSlides, normalizeVariants, parseCountOption, parsePortOption, parseTemplateOption, resolveConcreteTemplate, type CountOption, type PortOption } from './cli/options'
 import { printResult, summarizeMedia, summarizePlan, summarizeShowcase } from './cli/output'
+import { buildOutlineMarkdown, summarizeDeckStats } from './cli/outline'
 import { readDeckSource, type ReadDeckResult } from './cli/input'
 
 interface MaterializeResult {
@@ -279,6 +280,76 @@ program
       showcase: summarizeShowcase(source.deck),
       plan: summarizePlan(source.deck),
     })
+  })
+
+program
+  .command('outline')
+  .argument('[target]', 'Deck project directory or DeckSpec JSON file', '.')
+  .option('-o, --out <file>', 'Write the Markdown outline to a file')
+  .option('--json', 'Print structured output, including the full Markdown outline')
+  .action(async (target: string, options) => {
+    const deck = await readDeckFromTarget(target)
+    const markdown = buildOutlineMarkdown(deck)
+    if (options.out) {
+      await writeFile(resolve(options.out), markdown, 'utf8')
+      printResult(options.json, {
+        ok: true,
+        stage: 'outline',
+        message: `Markdown outline written: ${resolve(options.out)}`,
+        deckId: deck.id,
+        title: deck.title,
+        slides: deck.slides.length,
+        output: resolve(options.out),
+      })
+    }
+    else if (options.json) {
+      printResult(true, {
+        ok: true,
+        stage: 'outline',
+        deckId: deck.id,
+        title: deck.title,
+        slides: deck.slides.length,
+        stats: summarizeDeckStats(deck),
+        markdown,
+      })
+    }
+    else {
+      process.stdout.write(markdown)
+    }
+  })
+
+program
+  .command('stats')
+  .argument('[target]', 'Deck project directory or DeckSpec JSON file', '.')
+  .option('--json', 'Print structured output')
+  .action(async (target: string, options) => {
+    const deck = await readDeckFromTarget(target)
+    const stats = summarizeDeckStats(deck)
+    if (options.json) {
+      printResult(true, {
+        ok: true,
+        stage: 'stats',
+        deckId: deck.id,
+        title: deck.title,
+        templateId: deck.templateId,
+        schemaVersion: deck.version,
+        updatedAt: deck.updatedAt,
+        ...stats,
+      })
+    }
+    else {
+      const layouts = Object.entries(stats.layoutCounts)
+        .map(([layout, count]) => `${layout} x${count}`)
+        .join(', ')
+      process.stdout.write([
+        `CreatPPT deck stats: ${deck.title}`,
+        `Slides: ${stats.slides} | Words: ${stats.words} | Images: ${stats.images} (${stats.imagesWithAlt} with alt)`,
+        `Layouts: ${layouts}`,
+        ...(stats.densestSlide
+          ? [`Densest slide: #${stats.densestSlide.index} ${stats.densestSlide.title} (${stats.densestSlide.words} words)`]
+          : []),
+      ].join('\n') + '\n')
+    }
   })
 
 program.parseAsync().catch(error => {
@@ -556,6 +627,23 @@ async function waitForProcessExit(pid: number, timeoutMs = 4000): Promise<boolea
     await new Promise(resolveDelay => setTimeout(resolveDelay, 50))
   }
   return false
+}
+
+/** Accept either a delivery directory containing deck.json or a deck.json path. */
+async function readDeckFromTarget(target: string): Promise<DeckSpec> {
+  const resolved = resolve(target)
+  const deckPath = await isDirectory(resolved) ? resolve(resolved, 'deck.json') : resolved
+  let raw: string
+  try {
+    raw = await readFile(deckPath, 'utf8')
+  }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      throw new Error(`No deck.json found at ${deckPath}. Pass a delivery directory or a deck.json file.`)
+    }
+    throw error
+  }
+  return parseDeck(JSON.parse(raw))
 }
 
 async function assertEmptyDestination(outputDir: string): Promise<void> {

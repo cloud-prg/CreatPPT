@@ -232,6 +232,8 @@ npx @seekskyworld/creatppt@latest stop ./delivery --json
 
 The JSON result includes `projectDir`, `deckPath`, schema version, quality summary, URL, PID, and the invariant `pptxGenerated: false`. An Agent should not open a blank editor for approval, manually unzip starter assets, or export a PPTX before the user asks for it.
 
+Content reuse and self-review (added in this fork): `outline ./delivery` renders the deck's semantic content as a publishable Markdown outline (`--out` writes a file, `--json` returns the full Markdown), useful for turning a deck into a blog post; `stats ./delivery` reports CJK-aware word counts, per-slide density, layout distribution, and image alt coverage so an Agent can self-review before handoff. Both commands accept a delivery directory or a `deck.json` path and are read-only.
+
 Each template owns six starter images. Automatic filling uses only the selected
 template pool, in stable order, without repeating an automatically inserted
 image in the same deck. The other starter images are copied only so a later

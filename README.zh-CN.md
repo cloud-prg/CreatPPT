@@ -232,6 +232,8 @@ npx @seekskyworld/creatppt@latest stop ./delivery --json
 
 JSON 结果包含 `projectDir`、`deckPath`、schema 版本、质量摘要、URL、PID，以及固定的 `pptxGenerated: false`。Agent 不应打开空白编辑器让人审批，不应手动解压 starter 素材，也不应在用户要求前导出 PPTX。
 
+内容复用与自检（fork 新增）：`outline ./delivery` 把 deck 的语义内容渲染为可直接发布的 Markdown 大纲（`--out` 写文件，`--json` 返回完整 Markdown），适合把演示稿改写成博客或公众号文章；`stats ./delivery` 输出 CJK 感知的字数、逐页密度、版式分布和图片 alt 覆盖率，供 Agent 在交付前自检。两个命令都接受交付目录或 `deck.json` 路径，均为只读操作。
+
 每个模板拥有 6 张 starter 图片。自动填充只使用当前模板图片池，按稳定顺序分配，并保证同一 deck 内自动插入的图片不重复。其余 starter 图片被复制到交付目录，只是为了后续切换模板时本地资源仍然可用。Agent 或用户明确指定的图片按原样保留，不参与自动去重。网页审阅完成前请保留返回的 URL；执行 `stop` 后该 URL 会失效。
 
 JSON 响应包含 `media.total`、`media.automatic`、`media.manual` 和 `media.uniqueSources`，Agent 可以据此汇报页面实际使用的图片，而不是把复制到目录的完整 starter 图片库当成已使用素材。维护者新增模板时增加一个注册对象和 6 张图片，然后运行常规测试和构建命令。
